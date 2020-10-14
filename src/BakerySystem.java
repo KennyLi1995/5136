@@ -1,6 +1,9 @@
+import org.w3c.dom.ls.LSOutput;
+
 import java.io.*;
 import java.lang.reflect.Array;
 import java.text.SimpleDateFormat;
+import java.time.LocalDate;
 import java.util.*;
 
 
@@ -333,6 +336,17 @@ public class BakerySystem
             else if (option.equals("7"))
                 logout();
         }
+
+        if (currentUserType.equals("Owner")) {
+            Scanner console = new Scanner(System.in);
+            String option = console.nextLine();
+            if (option.equals("1"))
+                createNewOrder();
+            if (option.equals("8")) {
+                generateReport(bakery.getListOfStore().get(0));
+            } else if (option.equals("0"))
+                logout();
+        }
     }
 
     public ArrayList<String> searchItems(String s)
@@ -439,6 +453,17 @@ public class BakerySystem
                     }
                 }
                 initializeFoodItem();
+                ArrayList<String> inventory = readFile("inventory.csv");
+                ArrayList<Inventory> inventoryList = new ArrayList<>();
+                for (String item : inventory) {
+                    String[] i = item.split(",");
+                    Inventory anItem = new Inventory();
+                    anItem.setItemNumber(i[0]);
+                    anItem.setQuantity(Integer.parseInt(i[1]));
+                    anItem.setDateAdded(i[2]);
+                    inventoryList.add(anItem);
+                }
+                bakery.getListOfStore().get(0).setListOfInventory(inventoryList);
                 return true;
             }
         }
@@ -479,4 +504,100 @@ public class BakerySystem
         return strings;
     }
 
-}
+    public int chooseReport(){
+        UserInterface.displayTrackBusinessOption();
+        Scanner sc = new Scanner(System.in);
+        String option = sc.nextLine();
+        boolean isNumeric;
+        do {
+            isNumeric = true;
+            if (option.length() == 0){
+                System.out.println("The option cannot be blank");
+                isNumeric = false;
+            } else if (!isNumeric(option)){
+                System.out.println("Invalid input");
+                isNumeric = false;
+            } else if (!option.equals("1") && !option.equals("2")){
+                System.out.println("Invalid input");
+                isNumeric = false;
+            }
+            if (!isNumeric){
+                System.out.println("Please enter again: ");
+                option = sc.nextLine();
+            }
+        } while (!isNumeric);
+        return Integer.parseInt(option);
+    }
+
+    public int setLowInventoryBar(){
+        System.out.println("Please enter the number to set the bar for low inventory items: ");
+        Scanner sc = new Scanner(System.in);
+        String barForLowInventory = sc.nextLine();
+        boolean isNumeric;
+        do {
+            isNumeric = true;
+            if (barForLowInventory.length() == 0){
+                System.out.println("The standard of low inventory cannot be blank");
+                isNumeric = false;
+            } else if (!isNumeric(barForLowInventory)){
+                System.out.println("The standard should be a positive number");
+                isNumeric = false;
+            }
+            if (!isNumeric){
+                System.out.println("Please enter again: ");
+                barForLowInventory = sc.nextLine();
+            } else {
+                System.out.println("You set the bar for low inventory at " + barForLowInventory);
+            }
+        } while (!isNumeric);
+        return Integer.parseInt(barForLowInventory);
+    }
+
+    public void generateReport(Store store){
+        int choice = chooseReport();
+        if (choice == 1){
+            Report report1 = new Report(LocalDate.now(), "items low in inventory",
+                    "inventory report", store);
+            int lowInventory = setLowInventoryBar();
+            report1.displayReportTitle();
+            System.out.println("Food items low in inventory: ");
+            for (int i = 0; i < store.getListOfInventory().size(); i++) {
+                if (store.getListOfInventory().get(i).getQuantity() < lowInventory) {
+                    String itemNumber = store.getListOfInventory().get(i).getItemNumber();
+                    int itemQuantity = store.getListOfInventory().get(i).getQuantity();
+                    for (FoodItem item : foodList) {
+                        if (itemNumber.equals(item.getItemNumber())) {
+                            String itemName = item.getFoodItemName();
+                            System.out.println("itemName:" + itemName + "   " + "quantity:" + itemQuantity);
+                        }
+                    }
+                }
+            }
+        } else if (choice == 2){
+            Report report2 = new Report(LocalDate.now(), "Number of sold items in last month",
+                    "business report", store);
+            report2.displayReportTitle();
+            ArrayList<String> orders = readFile("order.csv");
+            int totalNum = 0;
+            for (String order: orders){
+                String[] quantities = order.split(",");
+                String[] quantity = quantities[4].split("\\|");
+                for (String q : quantity){
+                    totalNum += Integer.parseInt(q);
+                }
+            }
+            System.out.println("Total number of sold items in last month is: " + totalNum);
+            }
+            System.out.println("");
+        System.out.println("Please enter your choice: ");
+        System.out.println("1. Back to previous level");
+        System.out.println("2. Back to home screen");
+        Scanner sc = new Scanner(System.in);
+        String option = sc.nextLine();
+        if (option.equals("1")){
+            generateReport(bakery.getListOfStore().get(0));
+        } else if (option.equals("2")){
+            mainOption("Owner");
+        }
+        }
+    }

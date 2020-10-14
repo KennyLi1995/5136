@@ -83,6 +83,13 @@ public class UserInterface {
                 "Please try login again.or contact the owner to reset the password.");
     }
 
+    public static void displayTrackBusinessOption(){
+        displayBakeShop();
+        System.out.println("-- Please select one option by entering the number:");
+        System.out.println("1. Print items low in inventory");
+        System.out.println("2. Print total number of items sold in last month");
+    }
+
     public static void main(String[] args){
         BakerySystem bakerySystem = new BakerySystem();
         boolean check;
